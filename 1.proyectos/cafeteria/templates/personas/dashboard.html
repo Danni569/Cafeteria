@@ -1,0 +1,110 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Cafetería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-orange-100">
+    <nav class="bg-gradient-to-r from-amber-900 to-yellow-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-mug-hot text-amber-100 text-2xl"></i>
+                    <h1 class="text-white text-2xl font-bold">Cafetería</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-amber-100">{{ user_nombre }}</span>
+                    <a href="{% url 'logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition">
+                        Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="max-w-7xl mx-auto mt-4 px-4">
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <!-- Encabezado de bienvenida -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <div class="flex items-center gap-4">
+                <div class="text-4xl text-amber-600">
+                    <i class="fas fa-smile"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">¡Hola, {{ user_nombre }}!</h2>
+                    <p class="text-gray-600 mt-2">Estamos listos para servir el mejor café</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de acciones -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Botón de crear pedido -->
+            <a href="{% url 'crear_pedido' %}" class="block">
+                <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg shadow-lg p-8 hover:shadow-xl hover:scale-105 transition transform">
+                    <div class="text-center">
+                        <i class="fas fa-plus-circle text-white text-5xl mb-4"></i>
+                        <h3 class="text-white text-2xl font-bold">Crear Pedido</h3>
+                        <p class="text-amber-100 mt-2">Iniciar un nuevo pedido de cliente</p>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Información del usuario -->
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-user text-amber-600 mr-2"></i>Tu Información
+                </h3>
+                <div class="space-y-4">
+                    <div class="border-l-4 border-amber-600 pl-4">
+                        <p class="text-gray-600 text-sm">Nombre</p>
+                        <p class="text-gray-800 font-semibold">{{ user_nombre }}</p>
+                    </div>
+                    <div class="border-l-4 border-amber-600 pl-4">
+                        <p class="text-gray-600 text-sm">Email</p>
+                        <p class="text-gray-800 font-semibold break-all">{{ user_email }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acceso rápido -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-bolt text-orange-500 mr-2"></i>Acceso Rápido
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                <a href="{% url 'crear_pedido' %}" class="text-center p-4 bg-amber-50 border-2 border-amber-300 rounded-lg hover:bg-amber-100 transition">
+                    <i class="fas fa-shopping-cart text-amber-600 text-3xl mb-2"></i>
+                    <p class="text-gray-800 font-semibold text-sm">Nuevo Pedido</p>
+                </a>
+                <a href="{% url 'ver_ventas' %}" class="text-center p-4 bg-green-50 border-2 border-green-300 rounded-lg hover:bg-green-100 transition">
+                    <i class="fas fa-receipt text-green-600 text-3xl mb-2"></i>
+                    <p class="text-gray-800 font-semibold text-sm">Ver Ventas</p>
+                </a>
+                <a href="{% url 'dashboard' %}" class="text-center p-4 bg-blue-50 border-2 border-blue-300 rounded-lg hover:bg-blue-100 transition">
+                    <i class="fas fa-home text-blue-600 text-3xl mb-2"></i>
+                    <p class="text-gray-800 font-semibold text-sm">Inicio</p>
+                </a>
+                <a href="{% url 'logout' %}" class="text-center p-4 bg-red-50 border-2 border-red-300 rounded-lg hover:bg-red-100 transition">
+                    <i class="fas fa-sign-out-alt text-red-600 text-3xl mb-2"></i>
+                    <p class="text-gray-800 font-semibold text-sm">Salir</p>
+                </a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

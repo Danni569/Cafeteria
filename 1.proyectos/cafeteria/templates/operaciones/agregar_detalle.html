@@ -1,0 +1,509 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agregar Productos - Cafetería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-orange-100">
+    <nav class="bg-gradient-to-r from-amber-900 to-yellow-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-mug-hot text-amber-100 text-2xl"></i>
+                    <h1 class="text-white text-2xl font-bold">Cafetería</h1>
+                </div>
+                <div>
+                    <a href="{% url 'dashboard' %}" class="text-amber-100 hover:text-white transition">
+                        <i class="fas fa-home mr-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="max-w-7xl mx-auto mt-4 px-4">
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <!-- Encabezado -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">
+                        <i class="fas fa-shopping-basket text-amber-600 mr-2"></i>Agregar Productos al Pedido
+                    </h2>
+                    <p class="text-gray-600 mt-2">Pedido #{{ pedido.id_pedido }}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-600">Total del Pedido</div>
+                    <div class="text-4xl font-bold text-amber-600">Bs {{ pedido.total }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Panel de productos -->
+            <div class="lg:col-span-2">
+                <!-- Formulario para agregar producto -->
+                <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-plus text-green-600 mr-2"></i>Agregar Producto
+                    </h3>
+                    
+                    <form id="formAgregarProducto" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <div>
+                            <label for="producto" class="block text-lg font-bold text-gray-800 mb-3">
+                                <i class="fas fa-coffee text-amber-600 mr-2"></i>Producto
+                            </label>
+                            <select name="producto" id="producto" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-amber-600 focus:outline-none">
+                                <option value="">-- Selecciona un producto --</option>
+                                {% for producto in productos %}
+                                    <option value="{{ producto.id_producto }}">
+                                        {{ producto.nombre }} - Bs {{ producto.precio }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label for="cantidad" class="block text-lg font-bold text-gray-800 mb-3">
+                                <i class="fas fa-hashtag text-blue-600 mr-2"></i>Cantidad
+                            </label>
+                            <input type="number" name="cantidad" id="cantidad" value="1" min="1" required class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-amber-600 focus:outline-none">
+                        </div>
+
+                        <div id="mensajeProducto" class="hidden p-3 rounded-lg text-sm"></div>
+
+                        <button type="button" onclick="agregarProducto()" class="w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-3 rounded-lg transition transform hover:scale-105">
+                            <i class="fas fa-plus-circle mr-2"></i>Agregar al Pedido
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Lista de productos agregados -->
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="bg-gradient-to-r from-amber-400 to-orange-500 p-6">
+                        <h3 class="text-2xl font-bold text-white">
+                            <i class="fas fa-list mr-2"></i>Productos en el Pedido
+                        </h3>
+                        <p class="text-amber-100 mt-2">Total de productos: <strong id="totalProductos">{{ detalles|length }}</strong></p>
+                    </div>
+
+                    <div id="cuerpoTabla">
+                        {% if detalles %}
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-100 border-b-2 border-gray-300">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-gray-800 font-bold">Producto</th>
+                                            <th class="px-6 py-3 text-right text-gray-800 font-bold">Precio</th>
+                                            <th class="px-6 py-3 text-center text-gray-800 font-bold">Cantidad</th>
+                                            <th class="px-6 py-3 text-right text-gray-800 font-bold">Subtotal</th>
+                                            <th class="px-6 py-3 text-center text-gray-800 font-bold">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for detalle in detalles %}
+                                            <tr class="border-b border-gray-200 hover:bg-gray-50" data-detalle-id="{{ detalle.id_detalle }}">
+                                                <td class="px-6 py-4 text-gray-800">{{ detalle.id_producto.nombre }}</td>
+                                                <td class="px-6 py-4 text-right text-gray-800 font-semibold">Bs {{ detalle.precio_unitario }}</td>
+                                                <td class="px-6 py-4 text-center text-gray-800 font-semibold">{{ detalle.cantidad }}</td>
+                                                <td class="px-6 py-4 text-right text-amber-600 font-bold">Bs {{ detalle.subtotal }}</td>
+                                                <td class="px-6 py-4 text-center">
+                                                    <button type="button" onclick="eliminarDetalle({{ detalle.id_detalle }})" class="text-red-500 hover:text-red-700 transition">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="p-8 text-center">
+                                <p class="text-gray-600 text-lg">
+                                    <i class="fas fa-inbox text-gray-400 text-4xl mb-3 block"></i>
+                                    No hay productos agregados. Agrega uno para continuar.
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel lateral de resumen -->
+            <div>
+                <!-- Información del pedido -->
+                <div class="bg-white rounded-lg shadow-lg p-6 mb-6 sticky top-4">
+                    <h3 class="text-lg font-bold text-gray-800 mb-6">
+                        <i class="fas fa-file-invoice text-blue-600 mr-2"></i>Resumen del Pedido
+                    </h3>
+                    
+                    <div class="space-y-4 mb-6 border-b-2 pb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Productos:</span>
+                            <span class="font-bold text-gray-800" id="cantidadProductos">{{ detalles|length }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal:</span>
+                            <span class="font-bold text-gray-800" id="subtotalPedido">Bs {{ pedido.total }}</span>
+                        </div>
+                    </div>
+
+                    <div class="mb-6 bg-amber-50 p-4 rounded-lg">
+                        <div class="text-sm text-gray-600 mb-2">Total a Pagar</div>
+                        <div class="text-3xl font-bold text-amber-600" id="totalPedido">Bs {{ pedido.total }}</div>
+                    </div>
+
+                    <button type="button" id="btnFinalizar" onclick="abrirModalPago()" class="w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-3 rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-check-circle mr-2"></i>Finalizar Pedido
+                    </button>
+                    
+                    <a href="{% url 'dashboard' %}" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition text-center block mt-3">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </a>
+                </div>
+
+                <!-- Consejos -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-6">
+                    <h4 class="font-bold text-blue-900 mb-3">
+                        <i class="fas fa-lightbulb mr-2"></i>Consejos
+                    </h4>
+                    <ul class="text-blue-800 text-sm space-y-2">
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Agrega varios productos</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Verifica cantidades</li>
+                        <li><i class="fas fa-check text-green-500 mr-2"></i>Finaliza cuando esté listo</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pedidoId = {{ pedido.id_pedido }};
+        const selectProducto = document.getElementById('producto');
+        const inputCantidad = document.getElementById('cantidad');
+        const mensajeDiv = document.getElementById('mensajeProducto');
+        const btnFinalizar = document.getElementById('btnFinalizar');
+
+        function formatearMoneda(valor) {
+            return 'Bs ' + parseFloat(valor).toFixed(2);
+        }
+
+        function actualizarResumen() {
+            try {
+                const cuerpoTabla = document.getElementById('cuerpoTabla');
+                if (!cuerpoTabla) return;
+                
+                const filas = cuerpoTabla.querySelectorAll('tr[data-detalle-id]');
+                let totalProductos = filas.length;
+                let totalSum = 0;
+
+                filas.forEach(fila => {
+                    const subtotalText = fila.querySelector('td:nth-child(4)').textContent.replace('Bs ', '');
+                    totalSum += parseFloat(subtotalText);
+                });
+
+                document.getElementById('totalProductos').textContent = totalProductos;
+                document.getElementById('cantidadProductos').textContent = totalProductos;
+                document.getElementById('subtotalPedido').textContent = formatearMoneda(totalSum);
+                document.getElementById('totalPedido').textContent = formatearMoneda(totalSum);
+
+                if (btnFinalizar) {
+                    btnFinalizar.disabled = totalProductos === 0;
+                }
+            } catch (error) {
+                console.error('Error actualizando resumen:', error);
+            }
+        }
+
+        function agregarProducto() {
+            const productoId = selectProducto.value;
+            const cantidad = parseInt(inputCantidad.value);
+
+            if (!productoId) {
+                mostrarError('⚠️ Selecciona un producto');
+                return;
+            }
+
+            if (isNaN(cantidad) || cantidad < 1) {
+                mostrarError('⚠️ La cantidad debe ser mayor a 0');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('producto', productoId);
+            formData.append('cantidad', cantidad);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            // Mostrar estado de carga
+            mensajeDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Agregando producto...';
+            mensajeDiv.className = 'bg-blue-100 text-blue-800 p-3 rounded-lg text-sm';
+            mensajeDiv.classList.remove('hidden');
+
+            fetch(`/pedido/${pedidoId}/detalle/`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    agregarFilaTabla(data);
+                    selectProducto.value = '';
+                    inputCantidad.value = '1';
+                    mostrarExito(`Producto "${data.producto_nombre}" agregado exitosamente`);
+                    actualizarResumen();
+                } else {
+                    mostrarError(data.error || 'Error desconocido al agregar producto');
+                }
+            })
+            .catch(error => {
+                console.error('Error al agregar producto:', error);
+                mostrarError('❌ Error al procesar la solicitud. Verifica la consola del navegador.');
+            });
+        }
+
+        function agregarFilaTabla(data) {
+            const cuerpoTabla = document.getElementById('cuerpoTabla');
+            if (!cuerpoTabla) return;
+
+            // Si estaba vacía, crear tabla nueva
+            let tabla = cuerpoTabla.querySelector('table');
+            if (!tabla) {
+                cuerpoTabla.innerHTML = `
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-100 border-b-2 border-gray-300">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-gray-800 font-bold">Producto</th>
+                                    <th class="px-6 py-3 text-right text-gray-800 font-bold">Precio</th>
+                                    <th class="px-6 py-3 text-center text-gray-800 font-bold">Cantidad</th>
+                                    <th class="px-6 py-3 text-right text-gray-800 font-bold">Subtotal</th>
+                                    <th class="px-6 py-3 text-center text-gray-800 font-bold">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cuerpoTablaRows"></tbody>
+                        </table>
+                    </div>
+                `;
+                tabla = cuerpoTabla.querySelector('table');
+            }
+
+            const tbody = tabla.querySelector('tbody');
+            const fila = document.createElement('tr');
+            fila.className = 'border-b border-gray-200 hover:bg-gray-50';
+            fila.setAttribute('data-detalle-id', data.detalle_id);
+            fila.innerHTML = `
+                <td class="px-6 py-4 text-gray-800">${data.producto_nombre}</td>
+                <td class="px-6 py-4 text-right text-gray-800 font-semibold">${formatearMoneda(data.precio_unitario)}</td>
+                <td class="px-6 py-4 text-center text-gray-800 font-semibold">${data.cantidad}</td>
+                <td class="px-6 py-4 text-right text-amber-600 font-bold">${formatearMoneda(data.subtotal)}</td>
+                <td class="px-6 py-4 text-center">
+                    <button type="button" onclick="eliminarDetalle(${data.detalle_id})" class="text-red-500 hover:text-red-700 transition">
+                        <i class="fas fa-trash-alt"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(fila);
+        }
+
+        function mostrarExito(mensaje) {
+            mensajeDiv.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${mensaje}`;
+            mensajeDiv.className = 'bg-green-100 text-green-800 p-3 rounded-lg text-sm';
+            mensajeDiv.classList.remove('hidden');
+            setTimeout(() => {
+                mensajeDiv.classList.add('hidden');
+            }, 4000);
+        }
+
+        function mostrarError(mensaje) {
+            mensajeDiv.innerHTML = `<i class="fas fa-exclamation-circle mr-2"></i>${mensaje}`;
+            mensajeDiv.className = 'bg-red-100 text-red-800 p-3 rounded-lg text-sm';
+            mensajeDiv.classList.remove('hidden');
+        }
+
+        function eliminarDetalle(detalleId) {
+            if (!confirm('¿Estás seguro que quieres eliminar este producto?')) {
+                return;
+            }
+
+            fetch(`/pedido/${pedidoId}/eliminar-detalle/${detalleId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Eliminar fila
+                    const fila = document.querySelector(`[data-detalle-id="${detalleId}"]`);
+                    if (fila) {
+                        fila.remove();
+                    }
+
+                    // Verificar si no hay más productos
+                    const cuerpoTabla = document.getElementById('cuerpoTabla');
+                    const filasRestantes = cuerpoTabla.querySelectorAll('tr[data-detalle-id]');
+                    
+                    if (filasRestantes.length === 0) {
+                        cuerpoTabla.innerHTML = `
+                            <div class="p-8 text-center">
+                                <p class="text-gray-600 text-lg">
+                                    <i class="fas fa-inbox text-gray-400 text-4xl mb-3 block"></i>
+                                    No hay productos agregados. Agrega uno para continuar.
+                                </p>
+                            </div>
+                        `;
+                    }
+
+                    actualizarResumen();
+                    mostrarExito('Producto eliminado correctamente');
+                } else {
+                    mostrarError('Error al eliminar el producto');
+                }
+            })
+            .catch(error => {
+                console.error('Error al eliminar:', error);
+                mostrarError('❌ Error al eliminar el producto');
+            });
+        }
+
+        // Inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            selectProducto.focus();
+            actualizarResumen();
+            
+            inputCantidad.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    agregarProducto();
+                }
+            });
+        });
+
+        // Funciones para el modal de pago
+        function abrirModalPago() {
+            const cantidadProductos = document.getElementById('cuerpoTabla').querySelectorAll('tr[data-detalle-id]').length;
+            if (cantidadProductos === 0) {
+                mostrarError('⚠️ Debes agregar al menos un producto para finalizar');
+                return;
+            }
+            document.getElementById('modalPago').classList.remove('hidden');
+            document.getElementById('modalPago').classList.add('flex');
+        }
+
+        function cerrarModalPago() {
+            document.getElementById('modalPago').classList.add('hidden');
+            document.getElementById('modalPago').classList.remove('flex');
+        }
+
+        function finalizarConPago() {
+            const metodoPago = document.getElementById('selectMetodoPago').value;
+            if (!metodoPago) {
+                alert('Por favor selecciona un método de pago');
+                return;
+            }
+            
+            // Crear un formulario temporal para enviar el método de pago
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/pedido/${pedidoId}/nota-venta/`;
+            
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'metodo_pago';
+            input.value = metodoPago;
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrfmiddlewaretoken';
+            csrfInput.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            form.appendChild(input);
+            form.appendChild(csrfInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        // Cerrar modal al hacer clic fuera de él
+        document.getElementById('modalPago')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarModalPago();
+            }
+        });
+    </script>
+
+    <!-- Modal para seleccionar método de pago -->
+    <div id="modalPago" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full mx-4">
+            <div class="text-center mb-6">
+                <i class="fas fa-credit-card text-amber-600 text-4xl mb-3 block"></i>
+                <h2 class="text-2xl font-bold text-gray-800">Selecciona Método de Pago</h2>
+                <p class="text-gray-600 mt-2">¿Cómo deseas pagar?</p>
+            </div>
+
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-green-600 transition">
+                    <input type="radio" name="metodo_pago" id="selectMetodoPago" value="efectivo" class="w-4 h-4 text-green-600" checked>
+                    <span class="ml-3 flex-1">
+                        <span class="block font-bold text-gray-800"><i class="fas fa-money-bill mr-2 text-green-600"></i>Efectivo</span>
+                        <span class="text-sm text-gray-600">Pago en efectivo</span>
+                    </span>
+                </label>
+
+                <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-blue-600 transition">
+                    <input type="radio" name="metodo_pago" id="selectMetodoPago" value="qr" class="w-4 h-4 text-blue-600">
+                    <span class="ml-3 flex-1">
+                        <span class="block font-bold text-gray-800"><i class="fas fa-qrcode mr-2 text-blue-600"></i>QR</span>
+                        <span class="text-sm text-gray-600">Código QR/Transferencia</span>
+                    </span>
+                </label>
+
+                <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg cursor-pointer hover:border-purple-600 transition">
+                    <input type="radio" name="metodo_pago" id="selectMetodoPago" value="tarjeta" class="w-4 h-4 text-purple-600">
+                    <span class="ml-3 flex-1">
+                        <span class="block font-bold text-gray-800"><i class="fas fa-credit-card mr-2 text-purple-600"></i>Tarjeta</span>
+                        <span class="text-sm text-gray-600">Pago con tarjeta</span>
+                    </span>
+                </label>
+            </div>
+
+            <div class="space-y-3">
+                <button type="button" onclick="finalizarConPago()" class="w-full bg-gradient-to-r from-green-400 to-green-600 hover:from-green-500 hover:to-green-700 text-white font-bold py-3 rounded-lg transition">
+                    <i class="fas fa-check-circle mr-2"></i>Continuar con la Compra
+                </button>
+                <button type="button" onclick="cerrarModalPago()" class="w-full bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition">
+                    <i class="fas fa-times mr-2"></i>Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

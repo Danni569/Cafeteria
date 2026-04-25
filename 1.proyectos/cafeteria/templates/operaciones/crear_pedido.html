@@ -1,0 +1,272 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Pedido - Cafetería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-amber-50 to-orange-100">
+    <nav class="bg-gradient-to-r from-amber-900 to-yellow-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-mug-hot text-amber-100 text-2xl"></i>
+                    <h1 class="text-white text-2xl font-bold">Cafetería</h1>
+                </div>
+                <div>
+                    <a href="{% url 'dashboard' %}" class="text-amber-100 hover:text-white transition">
+                        <i class="fas fa-home mr-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="max-w-7xl mx-auto mt-4 px-4">
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Encabezado -->
+        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
+            <h2 class="text-3xl font-bold text-gray-800">
+                <i class="fas fa-plus-circle text-amber-600 mr-2"></i>Crear Nuevo Pedido
+            </h2>
+            <p class="text-gray-600 mt-2">Selecciona el cliente para iniciar un nuevo pedido</p>
+        </div>
+
+        <!-- Formulario de creación de pedido -->
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <form method="POST" class="p-8">
+                {% csrf_token %}
+                
+                <!-- Campo de cliente -->
+                <div class="mb-8">
+                    <label for="cliente" class="block text-lg font-bold text-gray-800 mb-4">
+                        <i class="fas fa-user text-amber-600 mr-2"></i>Cliente
+                    </label>
+                    
+                    <div class="flex gap-3">
+                        <select name="cliente" id="cliente" required class="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-amber-600 focus:outline-none">
+                            <option value="">-- Selecciona un cliente --</option>
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id_cliente }}">
+                                    {{ cliente.nombre }} ({{ cliente.ci_o_nit }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <button type="button" onclick="abrirModalCliente()" class="bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold py-3 px-6 rounded-lg transition">
+                            <i class="fas fa-plus mr-2"></i>Nuevo
+                        </button>
+                    </div>
+                    {% if clientes %}
+                        <p class="text-gray-600 text-sm mt-2">
+                            Total de clientes registrados: <strong>{{ clientes|length }}</strong>
+                        </p>
+                    {% else %}
+                        <p class="text-yellow-700 text-sm mt-2">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            No hay clientes. Crea uno para continuar.
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- Botones de acción -->
+                <div class="flex gap-4">
+                    <button type="submit" id="btnContinuar" class="flex-1 bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-bold py-3 rounded-lg transition transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i class="fas fa-arrow-right mr-2"></i>Continuar con el Pedido
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 rounded-lg transition text-center">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Información útil -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>Consejos
+                </h3>
+                <ul class="text-gray-700 space-y-2">
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Crea clientes rápidamente con el botón +</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Selecciona el cliente de la lista</li>
+                    <li><i class="fas fa-check text-green-500 mr-2"></i>Luego agrega los productos</li>
+                </ul>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4">
+                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>Información
+                </h3>
+                <p class="text-gray-700">
+                    Los clientes se guardan automáticamente. Puedes agregar más clientes en cualquier momento desde el formulario.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para crear cliente -->
+    <div id="modalCliente" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl max-w-md w-full mx-4">
+            <!-- Encabezado del modal -->
+            <div class="bg-gradient-to-r from-amber-600 to-orange-600 p-6 flex justify-between items-center">
+                <h3 class="text-2xl font-bold text-white">
+                    <i class="fas fa-user-plus mr-2"></i>Nuevo Cliente
+                </h3>
+                <button type="button" onclick="cerrarModalCliente()" class="text-white hover:text-amber-200 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <!-- Contenido del modal -->
+            <form id="formCliente" class="p-6 space-y-4">
+                {% csrf_token %}
+                
+                <div>
+                    <label for="clienteNombre" class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-user text-amber-600 mr-2"></i>Nombre del Cliente
+                    </label>
+                    <input type="text" id="clienteNombre" name="nombre" required placeholder="Juan Pérez" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-amber-600 focus:outline-none">
+                </div>
+
+                <div>
+                    <label for="clienteCI" class="block text-gray-800 font-bold mb-2">
+                        <i class="fas fa-id-card text-amber-600 mr-2"></i>CI o NIT
+                    </label>
+                    <input type="text" id="clienteCI" name="ci_o_nit" required placeholder="1234567" class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:border-amber-600 focus:outline-none">
+                </div>
+
+                <div id="mensajeModal" class="hidden p-3 rounded-lg text-sm"></div>
+
+                <!-- Botones -->
+                <div class="flex gap-3 pt-4 border-t">
+                    <button type="button" onclick="cerrarModalCliente()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 rounded-lg transition">
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="guardarCliente()" class="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-2 rounded-lg transition">
+                        <i class="fas fa-save mr-2"></i>Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const modal = document.getElementById('modalCliente');
+        const selectCliente = document.getElementById('cliente');
+        const btnContinuar = document.getElementById('btnContinuar');
+
+        function abrirModalCliente() {
+            modal.classList.remove('hidden');
+            document.getElementById('clienteNombre').focus();
+            limpiarMensaje();
+        }
+
+        function cerrarModalCliente() {
+            modal.classList.add('hidden');
+            document.getElementById('formCliente').reset();
+            limpiarMensaje();
+        }
+
+        function limpiarMensaje() {
+            const mensajeDiv = document.getElementById('mensajeModal');
+            mensajeDiv.classList.add('hidden');
+            mensajeDiv.textContent = '';
+        }
+
+        function guardarCliente() {
+            const nombre = document.getElementById('clienteNombre').value.trim();
+            const ci_o_nit = document.getElementById('clienteCI').value.trim();
+            const mensajeDiv = document.getElementById('mensajeModal');
+
+            if (!nombre || !ci_o_nit) {
+                mensajeDiv.textContent = '⚠️ Por favor completa todos los campos';
+                mensajeDiv.className = 'bg-yellow-100 text-yellow-800 p-3 rounded-lg text-sm';
+                mensajeDiv.classList.remove('hidden');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('nombre', nombre);
+            formData.append('ci_o_nit', ci_o_nit);
+            formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+            fetch('{% url "crear_cliente" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                // Asegurarse de que es JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    throw new Error('Respuesta no es JSON: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Respuesta del servidor:', data);
+                
+                if (data.success) {
+                    mensajeDiv.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${data.mensaje}`;
+                    mensajeDiv.className = 'bg-green-100 text-green-800 p-3 rounded-lg text-sm';
+                    mensajeDiv.classList.remove('hidden');
+
+                    // Agregar el nuevo cliente al dropdown
+                    const opcion = document.createElement('option');
+                    opcion.value = data.cliente_id;
+                    opcion.textContent = `${data.cliente_nombre} (${ci_o_nit})`;
+                    selectCliente.appendChild(opcion);
+                    selectCliente.value = data.cliente_id;
+
+                    // Limpiar formulario
+                    document.getElementById('formCliente').reset();
+
+                    // Cerrar modal después de 2 segundos
+                    setTimeout(() => {
+                        cerrarModalCliente();
+                    }, 1500);
+                } else {
+                    mensajeDiv.textContent = `❌ ${data.error || 'Error desconocido'}`;
+                    mensajeDiv.className = 'bg-red-100 text-red-800 p-3 rounded-lg text-sm';
+                    mensajeDiv.classList.remove('hidden');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                mensajeDiv.textContent = `❌ Error: ${error.message || 'Error al crear el cliente'}`;
+                mensajeDiv.className = 'bg-red-100 text-red-800 p-3 rounded-lg text-sm';
+                mensajeDiv.classList.remove('hidden');
+            });
+        }
+
+        // Habilitar/deshabilitar botón continuar
+        selectCliente.addEventListener('change', function() {
+            btnContinuar.disabled = !this.value;
+        });
+
+        // Inicializar estado del botón
+        btnContinuar.disabled = !selectCliente.value;
+
+        // Cerrar modal con tecla Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                cerrarModalCliente();
+            }
+        });
+    </script>
+</body>
+</html>

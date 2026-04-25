@@ -1,0 +1,254 @@
+{% load static %}
+{% load math_tags %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota de Venta - Cafetería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @media print {
+            body {
+                background: white;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <nav class="bg-gradient-to-r from-amber-900 to-yellow-800 shadow-lg no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-mug-hot text-amber-100 text-2xl"></i>
+                    <h1 class="text-white text-2xl font-bold">Cafetería</h1>
+                </div>
+                <div class="flex gap-4">
+                    <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded transition">
+                        <i class="fas fa-print mr-2"></i>Imprimir
+                    </button>
+                    <a href="{% url 'dashboard' %}" class="text-amber-100 hover:text-white transition">
+                        <i class="fas fa-home mr-2"></i>Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Nota de Venta -->
+        <div class="bg-white rounded-lg shadow-2xl overflow-hidden">
+            <!-- Encabezado decorativo -->
+            <div class="bg-gradient-to-r from-amber-700 to-yellow-700 p-8 text-center">
+                <div class="text-5xl mb-4">
+                    <i class="fas fa-mug-hot text-amber-100"></i>
+                </div>
+                <h1 class="text-4xl font-bold text-white mb-2">CAFETERÍA</h1>
+                <p class="text-amber-100 text-lg">Un lugar especial para disfrutar del mejor café</p>
+            </div>
+
+            <!-- Número y fecha de nota -->
+            <div class="bg-gray-50 p-6 border-b-2 border-gray-200">
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <p class="text-gray-600 text-sm">NOTA DE VENTA</p>
+                        <p class="text-3xl font-bold text-gray-800">#{{ nota.id_nota }}</p>
+                    </div>
+                    <div class="text-center">
+                        <p class="text-gray-600 text-sm">PEDIDO</p>
+                        <p class="text-3xl font-bold text-amber-600">#{{ pedido.id_pedido }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-gray-600 text-sm">FECHA</p>
+                        <p class="text-lg font-bold text-gray-800">{{ nota.fecha|date:"d/m/Y" }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Información de cliente y vendedor -->
+            <div class="p-8 bg-white">
+                <div class="grid grid-cols-2 gap-8 mb-8">
+                    <!-- Cliente -->
+                    <div class="border-l-4 border-amber-600 pl-6">
+                        <p class="text-gray-600 text-sm font-bold mb-2">CLIENTE</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ pedido.id_cliente.nombre }}</p>
+                        <p class="text-gray-600 mt-2">
+                            <i class="fas fa-id-card mr-2"></i>
+                            CI/NIT: <strong>{{ pedido.id_cliente.ci_o_nit }}</strong>
+                        </p>
+                    </div>
+
+                    <!-- Vendedor -->
+                    <div class="border-l-4 border-green-600 pl-6">
+                        <p class="text-gray-600 text-sm font-bold mb-2">VENDEDOR</p>
+                        <p class="text-2xl font-bold text-gray-800">{{ pedido.id_empleado.nombre_empleado }}</p>
+                        <p class="text-gray-600 mt-2">
+                            <i class="fas fa-envelope mr-2"></i>
+                            {{ pedido.id_empleado.email }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Línea divisoria -->
+                <div class="border-t-2 border-gray-300 my-8"></div>
+
+                <!-- Tabla de productos -->
+                <div class="mb-8">
+                    <table class="w-full">
+                        <thead>
+                            <tr class="bg-gray-100 border-b-2 border-gray-300">
+                                <th class="px-4 py-3 text-left text-gray-800 font-bold">PRODUCTO</th>
+                                <th class="px-4 py-3 text-center text-gray-800 font-bold">CANT.</th>
+                                <th class="px-4 py-3 text-right text-gray-800 font-bold">P.UNITARIO</th>
+                                <th class="px-4 py-3 text-right text-gray-800 font-bold">SUBTOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for detalle in detalles %}
+                                <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                    <td class="px-4 py-4">
+                                        <p class="font-semibold text-gray-800">{{ detalle.id_producto.nombre }}</p>
+                                        <p class="text-sm text-gray-600">{{ detalle.id_producto.id_categoria.nombre }}</p>
+                                    </td>
+                                    <td class="px-4 py-4 text-center font-semibold text-gray-800">
+                                        {{ detalle.cantidad }}
+                                    </td>
+                                    <td class="px-4 py-4 text-right font-semibold text-gray-800">
+                                        Bs {{ detalle.precio_unitario }}
+                                    </td>
+                                    <td class="px-4 py-4 text-right font-bold text-amber-600 text-lg">
+                                        Bs {{ detalle.subtotal }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Línea divisoria -->
+                <div class="border-t-2 border-gray-300 my-8"></div>
+
+                <!-- Resumen de totales -->
+                <div class="flex justify-end mb-8">
+                    <div class="w-full md:w-96">
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <div class="mb-4">
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-gray-700">Subtotal:</span>
+                                    <span class="font-semibold text-gray-800">Bs {{ pedido.total|floatformat:2 }}</span>
+                                </div>
+                                <div class="flex justify-between mb-3">
+                                    <span class="text-gray-700">IVA (13%):</span>
+                                    <span class="font-semibold text-gray-800">Bs {{ pedido.total|mul:"0.13"|floatformat:2 }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="border-t-2 border-gray-300 pt-4">
+                                <div class="flex justify-between">
+                                    <span class="text-lg font-bold text-gray-900">TOTAL A PAGAR:</span>
+                                    <span class="text-3xl font-bold text-amber-600">Bs {{ pedido.total|mul:"1.13"|floatformat:2 }}</span>
+                                </div>
+                            </div>
+
+                    <!-- Método de pago (información static) -->
+                    <div class="mt-6 pt-4 border-t-2 border-gray-300">
+                        <div class="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-600 text-2xl mr-3"></i>
+                                    <div>
+                                        <p class="text-gray-700 font-semibold text-sm">Método de Pago</p>
+                                        <p class="text-gray-900 font-bold text-lg">
+                                            {% if nota.metodo_pago == 'efectivo' %}
+                                                <i class="fas fa-money-bill mr-2 text-green-600"></i>Efectivo
+                                            {% elif nota.metodo_pago == 'qr' %}
+                                                <i class="fas fa-qrcode mr-2 text-blue-600"></i>QR / Transferencia
+                                            {% elif nota.metodo_pago == 'tarjeta' %}
+                                                <i class="fas fa-credit-card mr-2 text-purple-600"></i>Tarjeta
+                                            {% else %}
+                                                {{ nota.get_metodo_pago_display }}
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Línea divisoria -->
+                <div class="border-t-2 border-gray-300 my-8"></div>
+
+                <!-- Pie con datos de nota -->
+                <div class="text-center space-y-6">
+                    <!-- Línea para firma -->
+                    <div class="grid grid-cols-3 gap-8 text-center">
+                        <div>
+                            <div class="border-t-2 border-gray-400 pt-4">
+                                <p class="text-gray-600 text-sm font-bold">Firma Cliente</p>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="border-t-2 border-gray-400 pt-4">
+                                <p class="text-gray-600 text-sm font-bold">Firma Vendedor</p>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="border-t-2 border-gray-400 pt-4">
+                                <p class="text-gray-600 text-sm font-bold">Autorizado</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mensaje de agradecimiento -->
+                    <div class="w-full max-w-2xl mx-auto bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-8 mt-8">
+                        <p class="text-gray-700 text-lg text-center font-semibold">
+                            <i class="fas fa-heart text-red-500 mr-2"></i>
+                            ¡Gracias por su visita! Lo esperamos pronto.
+                        </p>
+                        <p class="text-gray-600 text-sm mt-3 text-center">
+                            Conserve este documento como comprobante de compra por 5 años.
+                        </p>
+                    </div>
+
+                    <!-- Información del negocio -->
+                    <div class="text-gray-600 text-sm space-y-1 pt-6">
+                        <p>📱 Teléfono: (+591) XXXX-XXXX</p>
+                        <p>📧 Email: info@cafeteria.com</p>
+                        <p>🌐 Web: www.cafeteria.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pie de página -->
+            <div class="bg-gray-100 p-4 text-center text-gray-600 text-xs">
+                <p>Sistema de Gestión Cafetería v1.0 | Generado automáticamente {{ "now"|date:"d/m/Y H:i:s" }}</p>
+            </div>
+        </div>
+
+        <!-- Botones de acción -->
+        <div class="flex gap-4 mt-8 no-print">
+            <button onclick="window.print()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">
+                <i class="fas fa-print mr-2"></i>Imprimir Nota
+            </button>
+            <a href="{% url 'crear_pedido' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition text-center">
+                <i class="fas fa-plus-circle mr-2"></i>Nuevo Pedido
+            </a>
+            <a href="{% url 'dashboard' %}" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 rounded-lg transition text-center">
+                <i class="fas fa-home mr-2"></i>Volver al Inicio
+            </a>
+        </div>
+    </div>
+
+    <!-- Script auxiliar para cálculos -->
+    <script>
+        // No es necesario implementar lógica adicional aquí
+    </script>
+</body>
+</html>

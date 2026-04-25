@@ -1,0 +1,389 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Supervisor - Cafetería</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 to-slate-800">
+    <nav class="bg-gradient-to-r from-amber-900 to-yellow-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-mug-hot text-amber-100 text-2xl"></i>
+                    <h1 class="text-white text-2xl font-bold">Cafetería - Supervisor</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span class="text-amber-100">{{ user_nombre }}</span>
+                    <a href="{% url 'logout' %}" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded transition">
+                        Salir
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto py-8 px-4">
+        <!-- Encabezado -->
+        <div class="mb-8">
+            <h2 class="text-4xl font-bold text-white mb-2">
+                <i class="fas fa-chart-line text-yellow-400 mr-3"></i>Dashboard de Control
+            </h2>
+            <p class="text-gray-300">Monitorea el rendimiento y las ventas en tiempo real</p>
+        </div>
+
+        <!-- KPIs Principales -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total de Dinero -->
+            <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-lg shadow-lg p-6 text-white">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-green-100 text-sm font-semibold mb-2">Dinero Ganado Total</p>
+                        <p class="text-4xl font-bold">Bs {{ total_dinero|floatformat:2 }}</p>
+                        <p class="text-green-100 text-xs mt-2">Todos los tiempos</p>
+                    </div>
+                    <i class="fas fa-money-bill-wave text-5xl opacity-20"></i>
+                </div>
+            </div>
+
+            <!-- Ventas Totales -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg shadow-lg p-6 text-white">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-blue-100 text-sm font-semibold mb-2">Total de Transacciones</p>
+                        <p class="text-4xl font-bold">{{ total_transacciones }}</p>
+                        <p class="text-blue-100 text-xs mt-2">Ventas completadas</p>
+                    </div>
+                    <i class="fas fa-shopping-cart text-5xl opacity-20"></i>
+                </div>
+            </div>
+
+            <!-- Meta Diaria -->
+            <div class="bg-gradient-to-br {% if cumple_meta %}from-purple-500 to-purple-700{% else %}from-orange-500 to-orange-700{% endif %} rounded-lg shadow-lg p-6 text-white">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="{% if cumple_meta %}text-purple-100{% else %}text-orange-100{% endif %} text-sm font-semibold mb-2">Meta Diaria (Bs {{ meta_diaria }})</p>
+                        <p class="text-4xl font-bold">Bs {{ total_hoy|floatformat:2 }}</p>
+                        <p class="{% if cumple_meta %}text-purple-100{% else %}text-orange-100{% endif %} text-xs mt-2">
+                            {% if cumple_meta %}✅ Meta Cumplida{% else %}❌ Meta no cumplida{% endif %}
+                        </p>
+                    </div>
+                    <i class="fas fa-bullseye text-5xl opacity-20"></i>
+                </div>
+            </div>
+
+            <!-- Ventas Hoy -->
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-700 rounded-lg shadow-lg p-6 text-white">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <p class="text-indigo-100 text-sm font-semibold mb-2">Ventas Hoy</p>
+                        <p class="text-4xl font-bold">{{ ventas_hoy_cantidad }}</p>
+                        <p class="text-indigo-100 text-xs mt-2">Transacciones realizadas</p>
+                    </div>
+                    <i class="fas fa-calendar-day text-5xl opacity-20"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Barra de Progreso Meta Diaria -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800">Progreso Meta Diaria</h3>
+                <span class="text-3xl font-bold text-amber-600">{{ porcentaje_meta }}%</span>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-4">
+                <div class="bg-gradient-to-r from-amber-400 to-amber-600 h-4 rounded-full" style="width: {{ porcentaje_meta }}%"></div>
+            </div>
+            <p class="text-gray-600 text-sm mt-3">
+                Bs {{ total_hoy|floatformat:2 }} de Bs {{ meta_diaria }} - 
+                {% if cumple_meta %}
+                    <span class="text-green-600 font-bold">¡Meta Cumplida! 🎉</span>
+                {% else %}
+                    <span class="text-orange-600 font-bold">Faltan Bs {{ meta_diaria|add:"-"|add:total_hoy|floatformat:2 }}</span>
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Gráficos -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <!-- Gráfico de Ventas Últimos 7 Días -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-chart-bar text-blue-600 mr-2"></i>Ventas Últimos 7 Días
+                </h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="chartVentas"></canvas>
+                </div>
+            </div>
+
+            <!-- Gráfico de Métodos de Pago -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-credit-card text-green-600 mr-2"></i>Ventas por Método de Pago
+                </h3>
+                <div class="relative" style="height: 300px;">
+                    <canvas id="chartMetodos"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ranking de Vendedores -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-trophy text-yellow-500 mr-2"></i>Ranking de Vendedores
+            </h3>
+            
+            {% if ranking_vendedores %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    {% for vendedor in ranking_vendedores|slice:":3" %}
+                        {% if forloop.counter == 1 %}
+                            <!-- Top 1 -->
+                            <div class="bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-lg p-6 text-white transform scale-105 shadow-xl">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p class="text-yellow-100 text-sm font-semibold">🥇 1er Lugar</p>
+                                        <p class="text-2xl font-bold">{{ vendedor.empleado.nombre_empleado }}</p>
+                                    </div>
+                                    <i class="fas fa-star text-5xl opacity-20"></i>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-yellow-100"><strong>Total:</strong> Bs {{ vendedor.total|floatformat:2 }}</p>
+                                    <p class="text-yellow-100"><strong>Ventas:</strong> {{ vendedor.cantidad }}</p>
+                                    <p class="text-yellow-100"><strong>Promedio:</strong> Bs {{ vendedor.promedio|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        {% elif forloop.counter == 2 %}
+                            <!-- Top 2 -->
+                            <div class="bg-gradient-to-br from-gray-400 to-gray-600 rounded-lg p-6 text-white shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p class="text-gray-100 text-sm font-semibold">🥈 2do Lugar</p>
+                                        <p class="text-2xl font-bold">{{ vendedor.empleado.nombre_empleado }}</p>
+                                    </div>
+                                    <i class="fas fa-medal text-5xl opacity-20"></i>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-gray-100"><strong>Total:</strong> Bs {{ vendedor.total|floatformat:2 }}</p>
+                                    <p class="text-gray-100"><strong>Ventas:</strong> {{ vendedor.cantidad }}</p>
+                                    <p class="text-gray-100"><strong>Promedio:</strong> Bs {{ vendedor.promedio|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        {% elif forloop.counter == 3 %}
+                            <!-- Top 3 -->
+                            <div class="bg-gradient-to-br from-orange-400 to-orange-600 rounded-lg p-6 text-white shadow-lg">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div>
+                                        <p class="text-orange-100 text-sm font-semibold">🥉 3er Lugar</p>
+                                        <p class="text-2xl font-bold">{{ vendedor.empleado.nombre_empleado }}</p>
+                                    </div>
+                                    <i class="fas fa-award text-5xl opacity-20"></i>
+                                </div>
+                                <div class="space-y-2">
+                                    <p class="text-orange-100"><strong>Total:</strong> Bs {{ vendedor.total|floatformat:2 }}</p>
+                                    <p class="text-orange-100"><strong>Ventas:</strong> {{ vendedor.cantidad }}</p>
+                                    <p class="text-orange-100"><strong>Promedio:</strong> Bs {{ vendedor.promedio|floatformat:2 }}</p>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+
+                <!-- Tabla completa de vendedores -->
+                {% if ranking_vendedores|length > 3 %}
+                    <div class="mt-8">
+                        <h4 class="text-lg font-bold text-gray-800 mb-4">Otros Vendedores</h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-100">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-gray-800 font-bold">Posición</th>
+                                        <th class="px-4 py-3 text-left text-gray-800 font-bold">Vendedor</th>
+                                        <th class="px-4 py-3 text-right text-gray-800 font-bold">Total Ventas</th>
+                                        <th class="px-4 py-3 text-center text-gray-800 font-bold">Cantidad</th>
+                                        <th class="px-4 py-3 text-right text-gray-800 font-bold">Promedio</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for vendedor in ranking_vendedores|slice:"3:" %}
+                                        <tr class="border-b hover:bg-gray-50">
+                                            <td class="px-4 py-3 text-gray-800 font-semibold">#{{ forloop.counter|add:3 }}</td>
+                                            <td class="px-4 py-3 text-gray-800">{{ vendedor.empleado.nombre_empleado }}</td>
+                                            <td class="px-4 py-3 text-right text-amber-600 font-bold">Bs {{ vendedor.total|floatformat:2 }}</td>
+                                            <td class="px-4 py-3 text-center text-gray-800">{{ vendedor.cantidad }}</td>
+                                            <td class="px-4 py-3 text-right text-gray-800">Bs {{ vendedor.promedio|floatformat:2 }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-inbox text-gray-400 text-5xl mb-4 block"></i>
+                    <p class="text-gray-600">No hay datos de vendedores aún</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Todas las Ventas -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h3 class="text-xl font-bold text-gray-800 mb-6">
+                <i class="fas fa-receipt text-green-600 mr-2"></i>Historial de Todas las Ventas
+            </h3>
+            
+            {% if todas_las_ventas %}
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-gray-800 font-bold">Nota #</th>
+                                <th class="px-4 py-3 text-left text-gray-800 font-bold">Pedido #</th>
+                                <th class="px-4 py-3 text-left text-gray-800 font-bold">Cliente</th>
+                                <th class="px-4 py-3 text-left text-gray-800 font-bold">Vendedor</th>
+                                <th class="px-4 py-3 text-left text-gray-800 font-bold">Fecha</th>
+                                <th class="px-4 py-3 text-right text-gray-800 font-bold">Total (Bs)</th>
+                                <th class="px-4 py-3 text-center text-gray-800 font-bold">Método Pago</th>
+                                <th class="px-4 py-3 text-center text-gray-800 font-bold">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for nota in todas_las_ventas %}
+                                <tr class="border-b hover:bg-gray-50 transition">
+                                    <td class="px-4 py-3 text-gray-800 font-semibold">#{{ nota.id_nota }}</td>
+                                    <td class="px-4 py-3 text-gray-800">#{{ nota.id_pedido.id_pedido }}</td>
+                                    <td class="px-4 py-3 text-gray-800">{{ nota.id_pedido.id_cliente.nombre }}</td>
+                                    <td class="px-4 py-3 text-gray-800">{{ nota.id_empleado.nombre_empleado }}</td>
+                                    <td class="px-4 py-3 text-gray-600">{{ nota.fecha|date:"d/m/Y" }}</td>
+                                    <td class="px-4 py-3 text-right text-amber-600 font-bold">{{ nota.total|floatformat:2 }}</td>
+                                    <td class="px-4 py-3 text-center">
+                                        {% if nota.metodo_pago == 'efectivo' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                                <i class="fas fa-money-bill-wave mr-2"></i>Efectivo
+                                            </span>
+                                        {% elif nota.metodo_pago == 'qr' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                                <i class="fas fa-qrcode mr-2"></i>QR
+                                            </span>
+                                        {% elif nota.metodo_pago == 'tarjeta' %}
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800">
+                                                <i class="fas fa-credit-card mr-2"></i>Tarjeta
+                                            </span>
+                                        {% else %}
+                                            <span class="text-gray-600">{{ nota.metodo_pago }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <a href="{% url 'nota_venta' nota.id_pedido.id_pedido %}" class="text-blue-600 hover:text-blue-800 transition font-semibold">
+                                            <i class="fas fa-eye mr-1"></i>Ver
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-inbox text-gray-400 text-5xl mb-4 block"></i>
+                    <p class="text-gray-600">No hay ventas registradas aún</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Botones de Acción -->
+        <div class="flex gap-4">
+            <a href="{% url 'dashboard' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition text-center">
+                <i class="fas fa-arrow-left mr-2"></i>Volver al Dashboard
+            </a>
+            <a href="{% url 'logout' %}" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition text-center">
+                <i class="fas fa-sign-out-alt mr-2"></i>Cerrar Sesión
+            </a>
+        </div>
+    </div>
+
+    <!-- Scripts para gráficos -->
+    <script>
+        // Gráfico de Ventas
+        const ctxVentas = document.getElementById('chartVentas').getContext('2d');
+        new Chart(ctxVentas, {
+            type: 'line',
+            data: {
+                labels: {{ etiquetas_dias_json|safe }},
+                datasets: [{
+                    label: 'Ventas (Bs)',
+                    data: {{ datos_dias_json|safe }},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: {
+                            font: { size: 14, weight: 'bold' }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return 'Bs ' + value.toFixed(0);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Gráfico de Métodos de Pago
+        const ctxMetodos = document.getElementById('chartMetodos').getContext('2d');
+        new Chart(ctxMetodos, {
+            type: 'doughnut',
+            data: {
+                labels: ['Efectivo', 'QR', 'Tarjeta'],
+                datasets: [{
+                    data: {{ datos_metodos_json|safe }},
+                    backgroundColor: [
+                        '#10b981',
+                        '#3b82f6',
+                        '#8b5cf6'
+                    ],
+                    borderColor: '#fff',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            font: { size: 14, weight: 'bold' },
+                            padding: 20
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
